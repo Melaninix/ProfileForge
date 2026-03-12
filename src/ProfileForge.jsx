@@ -1146,22 +1146,16 @@ export default function ProfileForge() {
       });
       const filename = (form.name || "profile").replace(/\s+/g, "-").toLowerCase();
 
+     const a = document.createElement("a");
+
       if (format === "png") {
-        const dataUrl = canvas.toDataURL("image/png");
-        const win = window.open();
-        if (!win) { alert("Please allow popups for this site to download images."); setDownloading(null); return; }
-        win.document.write(`<html><head><title>${filename}.png</title></head><body style="margin:0;background:#111;display:flex;flex-direction:column;align-items:center;padding:20px;font-family:sans-serif">
-          <p style="color:#aaa;margin:0 0 12px;font-size:13px">Right-click the image and choose <strong style="color:#fff">Save image as…</strong> to download as PNG</p>
-          <img src="${dataUrl}" style="max-width:100%;border-radius:8px;box-shadow:0 4px 32px #0008" />
-        </body></html>`);
+        a.href = canvas.toDataURL("image/png");
+        a.download = `${filename}.png`;
+        a.click();
       } else if (format === "jpeg") {
-        const dataUrl = canvas.toDataURL("image/jpeg", 0.92);
-        const win = window.open();
-        if (!win) { alert("Please allow popups for this site to download images."); setDownloading(null); return; }
-        win.document.write(`<html><head><title>${filename}.jpg</title></head><body style="margin:0;background:#111;display:flex;flex-direction:column;align-items:center;padding:20px;font-family:sans-serif">
-          <p style="color:#aaa;margin:0 0 12px;font-size:13px">Right-click the image and choose <strong style="color:#fff">Save image as…</strong> to download as JPEG</p>
-          <img src="${dataUrl}" style="max-width:100%;border-radius:8px;box-shadow:0 4px 32px #0008" />
-        </body></html>`);
+        a.href = canvas.toDataURL("image/jpeg", 0.92);
+        a.download = `${filename}.jpg`;
+        a.click();
       } else if (format === "pdf") {
         const { jsPDF } = window.jspdf;
         const imgW = canvas.width;
@@ -1171,13 +1165,7 @@ export default function ProfileForge() {
         const pdfH = imgH / (2 * pxPerMm);
         const pdf = new jsPDF({ orientation: pdfH > pdfW ? "portrait" : "landscape", unit: "mm", format: [pdfW, pdfH] });
         pdf.addImage(canvas.toDataURL("image/jpeg", 0.95), "JPEG", 0, 0, pdfW, pdfH);
-        const pdfUrl = pdf.output("bloburl");
-        const win = window.open();
-        if (!win) { alert("Please allow popups for this site to download the PDF."); setDownloading(null); return; }
-        win.document.write(`<html><head><title>${filename}.pdf</title></head><body style="margin:0;background:#111;display:flex;flex-direction:column;align-items:center;padding:20px;font-family:sans-serif">
-          <p style="color:#aaa;margin:0 0 12px;font-size:13px">Use your browser's <strong style="color:#fff">Download</strong> button or <strong style="color:#fff">File → Save</strong> to save the PDF</p>
-          <iframe src="${pdfUrl}" style="width:100%;height:90vh;border:none;border-radius:8px" />
-        </body></html>`);
+        pdf.save(`${filename}.pdf`);
       }
     } catch (err) {
       console.error("Export failed:", err);
