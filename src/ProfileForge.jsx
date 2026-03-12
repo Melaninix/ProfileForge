@@ -1147,15 +1147,18 @@ export default function ProfileForge() {
       const filename = (form.name || "profile").replace(/\s+/g, "-").toLowerCase();
 
      const a = document.createElement("a");
+      document.body.appendChild(a);
 
       if (format === "png") {
         a.href = canvas.toDataURL("image/png");
         a.download = `${filename}.png`;
         a.click();
+        document.body.removeChild(a);
       } else if (format === "jpeg") {
         a.href = canvas.toDataURL("image/jpeg", 0.92);
         a.download = `${filename}.jpg`;
         a.click();
+        document.body.removeChild(a);
       } else if (format === "pdf") {
         const { jsPDF } = window.jspdf;
         const imgW = canvas.width;
