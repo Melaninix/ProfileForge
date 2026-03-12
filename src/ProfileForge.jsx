@@ -17,6 +17,16 @@ function useExportLibs() {
   return ready;
 }
 
+function useWindowWidth() {
+  const [width, setWidth] = useState(typeof window !== "undefined" ? window.innerWidth : 1024);
+  useEffect(() => {
+    const handler = () => setWidth(window.innerWidth);
+    window.addEventListener("resize", handler);
+    return () => window.removeEventListener("resize", handler);
+  }, []);
+  return width;
+}
+
 // ─── Icons ────────────────────────────────────────────────────────────────────
 const Icon = ({ d, size = 18, className = "" }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
@@ -981,6 +991,9 @@ export default function ProfileForge() {
   const [saved, setSaved] = useState(false);
   const [downloading, setDownloading] = useState(null);
   const [apiKey, setApiKey] = useState("");
+  const width = useWindowWidth();
+  const isMobile = width < 768;
+  const isTablet = width < 1024;
 
   const previewRef = useRef(null);
   const exportReady = useExportLibs();
@@ -1042,11 +1055,13 @@ export default function ProfileForge() {
     setSkillSuggestions([]);
     setSkillSuggestError("");
     try {
-      const res = await fetch("/api/claude", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-  },
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "anthropic-version": "2023-06-01",
+          "anthropic-dangerous-direct-browser-access": "true",
+        },
         body: JSON.stringify({
           model: "claude-sonnet-4-5",
           max_tokens: 300,
@@ -1091,11 +1106,13 @@ export default function ProfileForge() {
     setAiLoading(true);
     setAiError("");
     try {
-      const res = await fetch("/api/claude", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-  },
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "anthropic-version": "2023-06-01",
+          "anthropic-dangerous-direct-browser-access": "true",
+        },
         body: JSON.stringify({
           model: "claude-sonnet-4-5",
           max_tokens: 1000,
@@ -1145,20 +1162,16 @@ export default function ProfileForge() {
         scale: 2, useCORS: true, backgroundColor: null, logging: false,
       });
       const filename = (form.name || "profile").replace(/\s+/g, "-").toLowerCase();
-
-     const a = document.createElement("a");
-      document.body.appendChild(a);
+      const a = document.createElement("a");
 
       if (format === "png") {
         a.href = canvas.toDataURL("image/png");
         a.download = `${filename}.png`;
         a.click();
-        document.body.removeChild(a);
       } else if (format === "jpeg") {
         a.href = canvas.toDataURL("image/jpeg", 0.92);
         a.download = `${filename}.jpg`;
         a.click();
-        document.body.removeChild(a);
       } else if (format === "pdf") {
         const { jsPDF } = window.jspdf;
         const imgW = canvas.width;
@@ -1183,7 +1196,7 @@ export default function ProfileForge() {
   return (
     <div style={{ minHeight: "100vh", background: bg, color: fg, fontFamily: "'Segoe UI', system-ui, sans-serif", transition: "background 0.3s" }}>
       {/* Top nav */}
-      <div style={{ borderBottom: `1px solid ${border}`, background: panel, padding: "0 24px", display: "flex", alignItems: "center", justifyContent: "space-between", height: 56, position: "sticky", top: 0, zIndex: 100 }}>
+      <div className="pf-nav" style={{ borderBottom: `1px solid ${border}`, background: panel, padding: "0 24px", display: "flex", alignItems: "center", justifyContent: "space-between", height: 56, position: "sticky", top: 0, zIndex: 100 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <div style={{ width: 28, height: 28, borderRadius: 8, background: `linear-gradient(135deg, ${accent}, #8b5cf6)`, display: "flex", alignItems: "center", justifyContent: "center" }}>
             <span style={{ fontSize: 14 }}>⬡</span>
@@ -1191,14 +1204,14 @@ export default function ProfileForge() {
           <span style={{ fontWeight: 800, fontSize: 16, letterSpacing: "-0.03em", background: `linear-gradient(90deg, ${accent}, #8b5cf6)`, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>ProfileForge</span>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <div className="pf-nav-actions" style={{ display: "flex", alignItems: "center", gap: 8 }}>
           {/* Step pills */}
           {["Form", "Template", "Preview"].map((s, i) => (
-            <button key={i} onClick={() => setStep(i + 1)} style={{ padding: "5px 12px", borderRadius: 20, border: `1px solid ${step === i + 1 ? accent : border}`, background: step === i + 1 ? `${accent}22` : "transparent", color: step === i + 1 ? accent : muted, fontSize: 12, fontWeight: 600, cursor: "pointer", transition: "all 0.2s" }}>
+            <button key={i} onClick={() => setStep(i + 1)} className="pf-step-pill" style={{ padding: "5px 12px", borderRadius: 20, border: `1px solid ${step === i + 1 ? accent : border}`, background: step === i + 1 ? `${accent}22` : "transparent", color: step === i + 1 ? accent : muted, fontSize: 12, fontWeight: 600, cursor: "pointer", transition: "all 0.2s" }}>
               <span style={{ opacity: step > i + 1 ? 0.5 : 1 }}>{i + 1}.</span> {s}
             </button>
           ))}
-          <div style={{ width: 1, height: 20, background: border, margin: "0 4px" }} />
+          <div style={{ width: 1, height: 20, background: border, margin: "0 2px" }} />
           <button
             onClick={() => setDark(d => !d)}
             style={{
@@ -1210,8 +1223,7 @@ export default function ProfileForge() {
             }}
           >
             <Icon d={dark ? Icons.moon : Icons.sun} size={13} />
-            {dark ? "Dark" : "Light"}
-            {/* Toggle pill */}
+            <span className="pf-mode-label">{dark ? "Dark" : "Light"}</span>
             <div style={{
               width: 32, height: 18, borderRadius: 9, background: dark ? accent : "#cbd5e1",
               position: "relative", transition: "background 0.2s", flexShrink: 0,
@@ -1231,11 +1243,11 @@ export default function ProfileForge() {
         <div style={{ height: "100%", width: `${progress}%`, background: `linear-gradient(90deg, ${accent}, #8b5cf6)`, transition: "width 0.4s ease" }} />
       </div>
 
-      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "28px 24px" }}>
+      <div className="pf-main" style={{ maxWidth: 1100, margin: "0 auto", padding: "28px 24px" }}>
 
         {/* STEP 1 — FORM */}
         {step === 1 && (
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
+          <div className="pf-form-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
             <div>
               <h2 style={{ margin: "0 0 4px", fontSize: 22, fontWeight: 800, letterSpacing: "-0.03em" }}>Build your profile</h2>
               <p style={{ margin: "0 0 24px", color: muted, fontSize: 13 }}>Fill in your details — you can always come back and edit.</p>
@@ -1352,7 +1364,7 @@ export default function ProfileForge() {
                 <p style={{ margin: "0 0 10px", fontSize: 12, fontWeight: 600, color: muted }}>Work Experience</p>
                 {form.experience.map((e, i) => (
                   <div key={i} style={{ marginBottom: 12, padding: "14px", borderRadius: 10, border: `1px solid ${border}`, background: dark ? "#0a0f1e" : "#f8fafc", position: "relative" }}>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 8 }}>
+                    <div className="pf-exp-row" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 8 }}>
                       <input value={e.role} onChange={ev => { const ne = [...form.experience]; ne[i].role = ev.target.value; set("experience", ne); }} placeholder="Job title / Role" style={inputStyle(dark)} />
                       <input value={e.company} onChange={ev => { const ne = [...form.experience]; ne[i].company = ev.target.value; set("experience", ne); }} placeholder="Company / Organization" style={inputStyle(dark)} />
                     </div>
@@ -1412,7 +1424,7 @@ export default function ProfileForge() {
         {/* STEP 2 — TEMPLATE */}
         {step === 2 && (
           <div>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
+            <div className="pf-section-header" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
               <div>
                 <h2 style={{ margin: "0 0 4px", fontSize: 22, fontWeight: 800, letterSpacing: "-0.03em" }}>Pick a template</h2>
                 <p style={{ margin: 0, color: muted, fontSize: 13 }}>All templates use your same data — just different vibes.</p>
@@ -1423,7 +1435,7 @@ export default function ProfileForge() {
               </button>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginBottom: 28 }}>
+            <div className="pf-tmpl-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginBottom: 28 }}>
               {TEMPLATES.map(t => (
                 <button key={t.id} onClick={() => setTemplate(t.id)} style={{ borderRadius: 14, border: `2px solid ${template === t.id ? accent : border}`, background: template === t.id ? `${accent}11` : panel, padding: 0, cursor: "pointer", overflow: "hidden", transition: "all 0.2s", position: "relative", textAlign: "left" }}>
                   {template === t.id && (
@@ -1443,9 +1455,9 @@ export default function ProfileForge() {
             </div>
 
             {/* Color customizer + Live preview side by side */}
-            <div style={{ display: "grid", gridTemplateColumns: "260px 1fr", gap: 16, marginBottom: 20, alignItems: "start" }}>
+            <div className="pf-color-preview" style={{ display: "grid", gridTemplateColumns: "260px 1fr", gap: 16, marginBottom: 20, alignItems: "start" }}>
               {/* Color Panel */}
-              <div style={{ background: panel, borderRadius: 14, border: `1px solid ${border}`, padding: 18, position: "sticky", top: 72 }}>
+              <div className="pf-color-panel" style={{ background: panel, borderRadius: 14, border: `1px solid ${border}`, padding: 18, position: "sticky", top: 72 }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
                   <p style={{ margin: 0, fontSize: 11, fontWeight: 700, color: accent, textTransform: "uppercase", letterSpacing: "0.15em" }}>🎨 Colors</p>
                   <button onClick={() => resetColors(template)} style={{ fontSize: 10, padding: "3px 8px", borderRadius: 6, border: `1px solid ${border}`, background: "transparent", color: muted, cursor: "pointer", fontWeight: 600 }}>Reset</button>
@@ -1507,7 +1519,7 @@ export default function ProfileForge() {
                   <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#22c55e" }} />
                   <span style={{ marginLeft: 8, fontSize: 12, color: muted, fontFamily: "monospace" }}>profileforge.app/preview</span>
                 </div>
-                <div style={{ maxHeight: 560, overflow: "auto" }}>
+                <div className="pf-tmpl-preview-scroll" style={{ maxHeight: 560, overflow: "auto" }}>
                   <Tmpl data={{ ...form }} dark={dark} colors={currentColors} />
                 </div>
               </div>
@@ -1523,7 +1535,7 @@ export default function ProfileForge() {
         {/* STEP 3 — PREVIEW & EXPORT */}
         {step === 3 && (
           <div>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
+            <div className="pf-section-header" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
               <div>
                 <h2 style={{ margin: "0 0 4px", fontSize: 22, fontWeight: 800, letterSpacing: "-0.03em" }}>Your profile is ready ✨</h2>
                 <p style={{ margin: 0, color: muted, fontSize: 13 }}>Export, copy, or share your polished profile.</p>
@@ -1531,15 +1543,15 @@ export default function ProfileForge() {
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                 {TEMPLATES.map(t => (
                   <button key={t.id} onClick={() => setTemplate(t.id)} style={{ padding: "5px 10px", borderRadius: 8, border: `1px solid ${template === t.id ? accent : border}`, background: template === t.id ? `${accent}22` : "transparent", color: template === t.id ? accent : fg, fontSize: 11, fontWeight: 600, cursor: "pointer" }}>
-                    {t.icon} {t.label}
+                    {t.icon} <span className="pf-tmpl-label">{t.label}</span>
                   </button>
                 ))}
               </div>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 260px", gap: 20, alignItems: "start" }}>
+            <div className="pf-preview-grid" style={{ display: "grid", gridTemplateColumns: "1fr 260px", gap: 20, alignItems: "start" }}>
               {/* Profile display */}
-              <div style={{ background: panel, borderRadius: 16, border: `1px solid ${border}`, overflow: "hidden" }}>
+              <div className="pf-preview-pane" style={{ background: panel, borderRadius: 16, border: `1px solid ${border}`, overflow: "hidden" }}>
                 <div style={{ padding: "10px 16px", borderBottom: `1px solid ${border}`, display: "flex", alignItems: "center", gap: 8 }}>
                   <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#ef4444" }} />
                   <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#f59e0b" }} />
@@ -1548,13 +1560,13 @@ export default function ProfileForge() {
                     profileforge.app/{form.handle?.replace("@", "") || "profile"}
                   </span>
                 </div>
-                <div ref={previewRef}>
+                <div className="pf-tmpl-preview-scroll" ref={previewRef}>
                   <Tmpl data={{ ...form }} dark={dark} colors={currentColors} />
                 </div>
               </div>
 
               {/* Actions sidebar */}
-              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <div className="pf-action-sidebar" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 <div style={{ background: panel, borderRadius: 14, border: `1px solid ${border}`, padding: 16 }}>
                   <p style={{ margin: "0 0 12px", fontSize: 11, fontWeight: 700, color: accent, textTransform: "uppercase", letterSpacing: "0.15em" }}>Export</p>
 
@@ -1650,11 +1662,53 @@ export default function ProfileForge() {
       {/* styles */}
       <style>{`
         * { box-sizing: border-box; }
+        input, textarea, button { -webkit-tap-highlight-color: transparent; }
         input:focus, textarea:focus { border-color: #6366f1 !important; box-shadow: 0 0 0 3px #6366f122; }
         button:hover { opacity: 0.88; }
         ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+
+        /* ── Mobile responsive ── */
         @media (max-width: 768px) {
-          .grid-2 { grid-template-columns: 1fr !important; }
+          input, textarea, select { font-size: 16px !important; }
+
+          /* Shell layout */
+          .pf-main { padding: 14px 12px !important; }
+          .pf-section-header { flex-direction: column !important; align-items: flex-start !important; gap: 12px !important; }
+          .pf-section-header h2 { font-size: 18px !important; }
+
+          /* Step 1 form grid → single col */
+          .pf-form-grid { grid-template-columns: 1fr !important; gap: 16px !important; }
+          .pf-exp-row { grid-template-columns: 1fr !important; }
+
+          /* Step 2 template picker → 2 col */
+          .pf-tmpl-grid { grid-template-columns: 1fr 1fr !important; gap: 10px !important; }
+          /* Step 2 color + preview → single col */
+          .pf-color-preview { grid-template-columns: 1fr !important; }
+          .pf-color-panel { position: static !important; }
+
+          /* Step 3 preview + sidebar → single col, sidebar first */
+          .pf-preview-grid { grid-template-columns: 1fr !important; }
+          .pf-preview-pane { order: 2 !important; }
+          .pf-action-sidebar { order: 1 !important; }
+          .pf-export-btns { grid-template-columns: 1fr 1fr 1fr !important; }
+
+          /* Template switcher pills — icons only handled in JSX */
+          .pf-tmpl-switcher { flex-wrap: wrap !important; }
+
+          /* Template preview container: allow horizontal scroll on mobile */
+          .pf-tmpl-preview-scroll { overflow-x: auto !important; -webkit-overflow-scrolling: touch !important; }
+          .pf-tmpl-preview-scroll > div { min-width: 380px !important; }
+
+          /* Nav */
+          .pf-nav-actions { gap: 4px !important; }
+          .pf-step-pill { padding: 5px 8px !important; font-size: 11px !important; }
+          .pf-mode-label { display: none !important; }
+          .pf-tmpl-label { display: none !important; }
+          .pf-nav { padding: 0 12px !important; }
+        }
+
+        @media (max-width: 480px) {
+          .pf-tmpl-grid { grid-template-columns: 1fr !important; }
         }
       `}</style>
     </div>
