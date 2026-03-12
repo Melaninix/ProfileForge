@@ -1042,13 +1042,11 @@ export default function ProfileForge() {
     setSkillSuggestions([]);
     setSkillSuggestError("");
     try {
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "anthropic-version": "2023-06-01",
-          "anthropic-dangerous-direct-browser-access": "true",
-        },
+      const res = await fetch("/api/claude", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
         body: JSON.stringify({
           model: "claude-sonnet-4-5",
           max_tokens: 300,
@@ -1093,13 +1091,11 @@ export default function ProfileForge() {
     setAiLoading(true);
     setAiError("");
     try {
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "anthropic-version": "2023-06-01",
-          "anthropic-dangerous-direct-browser-access": "true",
-        },
+      const res = await fetch("/api/claude", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
         body: JSON.stringify({
           model: "claude-sonnet-4-5",
           max_tokens: 1000,
